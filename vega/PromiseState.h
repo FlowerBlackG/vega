@@ -8,6 +8,9 @@
 #include <functional>
 
 
+namespace vega {
+
+
 enum class PromiseStatus { Pending, Fulfilled, Rejected };
 
 
@@ -107,4 +110,8 @@ struct PromiseState<void> {
         continuations.clear();
     }
 };
+
+
+
+}  // namespace vega
 

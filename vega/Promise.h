@@ -9,6 +9,10 @@
 
 #include <vega/PromiseState.h>
 
+
+namespace vega {
+
+
 template <typename T>
 struct Promise {
     std::shared_ptr<PromiseState<T>> state;
@@ -88,3 +92,5 @@ struct Promise<void> {
     Awaiter operator co_await() { return Awaiter{state}; }
 };
 
+
+}  // namespace vega
