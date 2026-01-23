@@ -13,12 +13,29 @@
 namespace vega {
 
 
-template <typename T>
+template <typename T = void>
 struct Promise {
     std::shared_ptr<PromiseState<T>> state;
 
     Promise() : state(std::make_shared<PromiseState<T>>()) {}
     Promise(std::shared_ptr<PromiseState<T>> state) : state(state) {}
+
+    static Promise<T> resolve(T&& value) {
+        Promise<T> p;
+        p.state->resolve(std::move(value));
+        return p;
+    }
+
+    static Promise<T> reject(std::exception_ptr e) {
+        Promise<T> p;
+        p.state->reject(e);
+        return p;
+    }
+
+    template<typename E>
+    static Promise<T> reject(const E& exception) {
+        return reject(std::make_exception_ptr(exception));
+    }
 
     struct promise_type {
         std::shared_ptr<PromiseState<T>> state = std::make_shared<PromiseState<T>>();
@@ -59,6 +76,24 @@ struct Promise<void> {
 
     Promise() : state(std::make_shared<PromiseState<void>>()) {}
     Promise(std::shared_ptr<PromiseState<void>> state) : state(state) {}
+
+
+    static Promise<void> resolve() {
+        Promise<void> p;
+        p.state->resolve();
+        return p;
+    }
+
+    static Promise<void> reject(std::exception_ptr e) {
+        Promise<void> p;
+        p.state->reject(e);
+        return p;
+    }
+
+    template<typename E>
+    static Promise<void> reject(const E& exception) {
+        return reject(std::make_exception_ptr(exception));
+    }
 
     struct promise_type {
         std::shared_ptr<PromiseState<void>> state = std::make_shared<PromiseState<void>>();
