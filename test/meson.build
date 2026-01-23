@@ -34,3 +34,14 @@ test(
     ),
     env: test_env
 )
+
+
+test(
+    'throws',
+    executable(
+        'throws',
+        'throws.cc',
+        dependencies: vega_dep
+    ),
+    env: test_env
+)
