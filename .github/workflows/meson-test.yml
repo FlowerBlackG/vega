@@ -1,0 +1,43 @@
+name: Meson Test
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+    
+  # allows to run this workflow manually from the actions tab
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    name: "Meson Test"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y gcc-14 g++-14
+        python3 -m pip install --upgrade pip
+        python3 -m pip install meson ninja
+
+    - name: see environment
+      run: |
+        lsb_release -a
+        uname -a
+        gcc-14 -v
+        g++-14 -v
+        meson -v
+        ninja --version
+    - name: meson setup and test
+      env:
+        CC: gcc-14
+        CXX: g++-14
+      run: |
+        cd ${{ github.workspace }}
+        meson setup build/
+        meson test -C build/ -v
