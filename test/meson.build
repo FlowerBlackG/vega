@@ -23,3 +23,14 @@ test(
     ),
     env: test_env
 )
+
+
+test(
+    'blockedMain',
+    executable(
+        'blockedMain',
+        'blockedMain.cc',
+        dependencies: vega_dep
+    ),
+    env: test_env
+)
