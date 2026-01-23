@@ -57,3 +57,16 @@ test(
     ),
     env: test_env
 )
+
+
+
+test(
+    'mockNio',
+    executable(
+        'mockNio',
+        'mockNio.cc',
+        dependencies: vega_dep
+    ),
+    env: test_env
+)
+
