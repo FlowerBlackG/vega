@@ -37,6 +37,21 @@ struct Promise {
         return reject(std::make_exception_ptr(exception));
     }
 
+    struct Rejector {
+        std::shared_ptr<PromiseState<T>> state;
+        void operator()(std::exception_ptr e) const { state->reject(e); }
+        template<typename E>
+        void operator()(const E& exception) const { state->reject(std::make_exception_ptr(exception)); }
+    };
+
+    template<typename F>
+    static Promise<T> create(F&& executor) {
+        Promise<T> p;
+        auto resolve = [state = p.state](T&& value) { state->resolve(std::move(value)); };
+        executor(resolve, Rejector{p.state});
+        return p;
+    }
+
     struct promise_type {
         std::shared_ptr<PromiseState<T>> state = std::make_shared<PromiseState<T>>();
 
@@ -93,6 +108,23 @@ struct Promise<void> {
     template<typename E>
     static Promise<void> reject(const E& exception) {
         return reject(std::make_exception_ptr(exception));
+    }
+
+    
+    struct Rejector {
+        std::shared_ptr<PromiseState<void>> state;
+        void operator()(std::exception_ptr e) const { state->reject(e); }
+        template<typename E>
+        void operator()(const E& exception) const { state->reject(std::make_exception_ptr(exception)); }
+    };
+
+
+    template<typename F>
+    static Promise<void> create(F&& executor) {
+        Promise<void> p;
+        auto resolve = [state = p.state]() { state->resolve(); };
+        executor(resolve, Rejector{p.state});
+        return p;
     }
 
     struct promise_type {
