@@ -8,7 +8,7 @@
 #include <queue>
 #include <vector>
 #include <thread>
-
+#include <unordered_set>
 
 #include <vega/Promise.h>
 
@@ -29,14 +29,17 @@ private:
 
     std::queue<Task> regularTasks;
     std::priority_queue<DelayedTask, std::vector<DelayedTask>, std::greater<DelayedTask>> delayedTasks;
-
+    std::unordered_set<std::shared_ptr<PromiseStateBase>> trackedPromises;
 
     /**
      *
      * 
      * @return size_t N-tasks resolved. 
      */
-    size_t resolveDelayedTasks();
+    size_t dispatchDelayedTasks();
+    size_t dispatchRegularTasks();
+
+    size_t removeCompletedTrackedPromises();
 
     /**
      *
@@ -45,20 +48,28 @@ private:
      */
     size_t dispatch() {
         size_t dispatched = 0;
-        while (!regularTasks.empty() || !delayedTasks.empty()) {
-            
-            dispatched += resolveDelayedTasks();
-
-            while (!regularTasks.empty()) {
-                auto task = std::move(regularTasks.front());
-                regularTasks.pop();
-                task();
-                dispatched++;
-            }
-        }
+        
+        dispatched += dispatchDelayedTasks();
+        dispatched += dispatchRegularTasks();
         
         return dispatched;
     }
+
+
+    template <typename _Rep, typename _Period>
+    void drain(std::chrono::duration<_Rep, _Period> snap) {
+        while (!regularTasks.empty() || !delayedTasks.empty() || !trackedPromises.empty()) {
+            size_t dispatched = dispatch();
+            size_t removedPromises = removeCompletedTrackedPromises();
+
+            if (dispatched + removedPromises == 0) {
+                std::this_thread::sleep_for(snap);
+            }
+        }
+    }
+
+    void drain() { drain(std::chrono::microseconds(100)); }
+
 
 public:
     static Scheduler& getInstance() { static Scheduler instance; return instance; }
@@ -66,19 +77,21 @@ public:
     static Scheduler& get() { return getInstance(); }
 
 
-    template<typename Callable>
-    void runBlocking(Callable&& callable) {
-        
-        regularTasks.emplace( [&callable] () { callable(); } );
-
-        while (!regularTasks.empty() || !delayedTasks.empty()) {
-            size_t dispatched = dispatch();
-
-            if (dispatched == 0) {
-                std::this_thread::sleep_for(std::chrono::microseconds(100));
-            }
-        }
+    template<typename F>
+    requires std::invocable<F> && std::same_as<std::invoke_result_t<F>, Promise<void>>
+    void runBlocking(F&& callable) {
+        trackedPromises.emplace(callable().state);
+        drain();
     }
+
+
+    template<typename F>
+    requires std::invocable<F> && std::same_as<std::invoke_result_t<F>, void>
+    void runBlocking(F&& callable) {
+        regularTasks.emplace([&callable] () { callable(); });
+        drain();
+    }
+
 
 
     template<typename _Rep, typename _Period>

@@ -14,13 +14,54 @@ namespace vega {
 enum class PromiseStatus { Pending, Fulfilled, Rejected };
 
 
-template <typename T>
-struct PromiseState {
+class PromiseStateBase {
+public:
+
+    virtual ~PromiseStateBase() = default;
+
+public:
+
     PromiseStatus status = PromiseStatus::Pending;
-    
-    std::optional<T> value;
     std::exception_ptr exception;
+    
+protected:
+
     std::vector<std::function<void()>> continuations;
+
+public:
+
+    void addContinuation(std::function<void()> cont) {
+        if (status != PromiseStatus::Pending)
+            cont();
+        else
+            continuations.push_back(std::move(cont));
+    }
+
+    void resumeContinuations() {
+        for (auto& cont : continuations) {
+            cont();
+        }
+        continuations.clear();
+    }
+
+
+    void reject(std::exception_ptr e) {
+        if (status != PromiseStatus::Pending) {
+            return;
+        }
+
+        exception = e;
+        status = PromiseStatus::Rejected;
+        
+        resumeContinuations();
+    }
+};
+
+
+template <typename T>
+class PromiseState : public PromiseStateBase {
+public:
+    std::optional<T> value;
 
 
     void resolve(T v) {
@@ -33,45 +74,12 @@ struct PromiseState {
         
         resumeContinuations();
     }
-
-
-    void reject(std::exception_ptr e) {
-        if (status != PromiseStatus::Pending) {
-            return;
-        }
-
-        exception = e;
-        status = PromiseStatus::Rejected;
-        
-        resumeContinuations();
-    }
-
-
-    void addContinuation(std::function<void()> cont) {
-        if (status != PromiseStatus::Pending)
-            cont();
-        else
-            continuations.push_back(std::move(cont));
-    }
-
-
-    void resumeContinuations() {
-        for (auto& cont : continuations) {
-            cont();
-        }
-        continuations.clear();
-    }
 };
 
 
 template<>
-struct PromiseState<void> {
-    PromiseStatus status = PromiseStatus::Pending;
-    
-    std::exception_ptr exception;
-    std::vector<std::function<void()>> continuations;
-
-
+struct PromiseState<void> : public PromiseStateBase {
+public:
     void resolve() {
         if (status != PromiseStatus::Pending) {
             return;
@@ -80,34 +88,6 @@ struct PromiseState<void> {
         status = PromiseStatus::Fulfilled;
         
         resumeContinuations();
-    }
-
-
-    void reject(std::exception_ptr e) {
-        if (status != PromiseStatus::Pending) {
-            return;
-        }
-
-        exception = e;
-        status = PromiseStatus::Rejected;
-        
-        resumeContinuations();
-    }
-
-
-    void addContinuation(std::function<void()> cont) {
-        if (status != PromiseStatus::Pending)
-            cont();
-        else
-            continuations.push_back(std::move(cont));
-    }
-
-
-    void resumeContinuations() {
-        for (auto& cont : continuations) {
-            cont();
-        }
-        continuations.clear();
     }
 };
 
