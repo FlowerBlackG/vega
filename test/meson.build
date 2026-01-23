@@ -37,6 +37,18 @@ test(
 
 
 test(
+    'promiseCreate',
+    executable(
+        'promiseCreate',
+        'promiseCreate.cc',
+        dependencies: vega_dep
+    ),
+    env: test_env
+)
+
+
+
+test(
     'throws',
     executable(
         'throws',
