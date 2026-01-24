@@ -9,6 +9,7 @@
 #include <vector>
 #include <thread>
 #include <unordered_set>
+#include <mutex>
 
 #include <vega/Promise.h>
 
@@ -27,9 +28,31 @@ private:
         bool ready() const { return resolveTime <= std::chrono::steady_clock::now(); }
     };
 
-    std::queue<Task> regularTasks;
-    std::priority_queue<DelayedTask, std::vector<DelayedTask>, std::greater<DelayedTask>> delayedTasks;
-    std::unordered_set<std::shared_ptr<PromiseStateBase>> trackedPromises;
+    template <typename T>
+    struct Synchronized {
+        T data;
+        std::mutex lock;
+
+        bool empty() {
+            const std::lock_guard<std::mutex> _l {lock};
+            return data.empty();
+        }
+
+        template <typename F>
+        auto withLock(F&& f) {
+            const std::lock_guard<std::mutex> _l {lock};
+            return f(data);
+        }
+    };
+
+
+    Synchronized<std::queue<Task>> regularTasks;
+
+    Synchronized<
+        std::priority_queue<DelayedTask, std::vector<DelayedTask>, std::greater<DelayedTask>>
+    > delayedTasks;
+    
+    Synchronized<std::unordered_set<std::shared_ptr<PromiseStateBase>>> trackedPromises;
 
     /**
      *
@@ -96,7 +119,12 @@ public:
     void runBlocking(F&& callable) {
         Scheduler* previousScheduler = Scheduler::setCurrent(this);
 
-        trackedPromises.emplace(callable().state);
+        auto promise = callable();
+
+        trackedPromises.withLock([&promise] (auto& it) {
+            it.emplace(promise.state);
+        });
+
         drain();
 
         Scheduler::setCurrent(previousScheduler);
@@ -108,7 +136,10 @@ public:
     void runBlocking(F&& callable) {
         Scheduler* previousScheduler = Scheduler::setCurrent(this);
 
-        regularTasks.emplace([&callable] () { callable(); });
+        regularTasks.withLock([&callable] (auto& it) {
+            it.emplace([&callable] () { callable(); });
+        });
+
         drain();
 
         Scheduler::setCurrent(previousScheduler);
@@ -123,9 +154,11 @@ public:
 
         std::chrono::steady_clock::time_point resolveTime = std::chrono::steady_clock::now() + duration;
         
-        delayedTasks.push({
-            .state = ret.state,
-            .resolveTime = resolveTime,
+        delayedTasks.withLock([&ret, resolveTime] (auto& it) {
+            it.push({
+                .state = ret.state,
+                .resolveTime = resolveTime,
+            });
         });
 
         return ret;
@@ -140,7 +173,9 @@ public:
 
 
     void addTask(Task task) {
-        regularTasks.push(std::move(task));
+        regularTasks.withLock([&task] (auto& it) {
+            it.emplace(std::move(task));
+        });
     }
 
 
