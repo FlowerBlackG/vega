@@ -10,13 +10,15 @@ namespace vega {
 void PromiseStateBase::resumeContinuationsOnScheduler(Scheduler* scheduler) {
     scheduler = scheduler ? scheduler : this->scheduler;
 
-    if (scheduler && scheduler != Scheduler::getCurrent()) {
+    bool shouldQueue = scheduler && (scheduler != Scheduler::getCurrent() || scheduler->shouldQueueTask());
+
+    if (shouldQueue) {
         scheduler->addTask([p = this->getPtr()] () {
             p->resumeContinuations();
         });
     }
     else {
-        // resume on current thread
+        // fastpath: resume on current thread
         this->resumeContinuations();
     }
 }

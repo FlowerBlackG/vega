@@ -10,6 +10,22 @@ namespace vega {
  */
 static thread_local Scheduler* currentScheduler = nullptr;
 
+/**
+ * SIZE_MAX means non-worker thread (maybe a scheduler's main thread, or not belong to any scheduler).
+ */
+static thread_local size_t workerThreadId = SIZE_MAX;
+
+
+Scheduler::Scheduler(size_t nWorkers) : nWorkers(nWorkers > 1 ? nWorkers : 0) {
+    if (this->nWorkers > 0)
+        startWorkers();
+}
+
+
+Scheduler::~Scheduler() {
+    stopAndJoinWorkers();
+}
+
 
 Scheduler* Scheduler::getCurrent() {
     return currentScheduler;
@@ -20,6 +36,87 @@ Scheduler* Scheduler::setCurrent(Scheduler* scheduler) {
     auto prev = currentScheduler;
     currentScheduler = scheduler;
     return prev;
+}
+
+
+bool Scheduler::isCurrentThreadWorker() const {
+    return workerThreadId != SIZE_MAX;
+}
+
+
+bool Scheduler::isCurrentThreadMain() const {
+    return currentScheduler == this && workerThreadId == SIZE_MAX;
+}
+
+
+bool Scheduler::shouldQueueTask() const {
+    return workersStarted && workerThreadId == SIZE_MAX;
+}
+
+
+void Scheduler::startWorkers() {
+    if (workersStarted.exchange(true)) {
+        return;  // workers already started
+    }
+
+    stopWorkers = false;
+    workerThreads.reserve(this->nWorkers);
+
+    for (size_t i = 0; i < this->nWorkers; ++i) {
+        workerThreads.emplace_back([this, i]() {
+            this->workerThreadMain(i);
+        });
+    }
+}
+
+
+void Scheduler::stopAndJoinWorkers() {
+    if (!workersStarted.exchange(false)) {
+        return;  // workers not started or already stopped
+    }
+
+    stopWorkers = true;
+    taskSemaphore.release(this->nWorkers);
+
+    for (auto& thread : workerThreads) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+    workerThreads.clear();
+}
+
+
+void Scheduler::workerThreadMain(size_t workerId) {
+
+    Scheduler::setCurrent(this);
+    workerThreadId = workerId;
+
+    while (!stopWorkers) {
+        taskSemaphore.acquire();
+
+        if (stopWorkers)
+            break;
+
+        std::optional<Task> task;
+        regularTasks.withLock([&task] (auto& q) {
+            if (!q.empty()) {
+                task = std::move(q.front());
+                q.pop();
+            }
+        });
+
+        if (!task)
+            continue;
+            
+        activeWorkers++;
+        task.value()();  // note: if task throws, it will destroy the whole worker thread.
+        activeWorkers--;
+    }
+
+    
+    workerThreadId = SIZE_MAX;
+    Scheduler::setCurrent(nullptr);
 }
 
 

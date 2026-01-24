@@ -70,3 +70,14 @@ test(
     env: test_env
 )
 
+
+test(
+    'multipleWorkers',
+    executable(
+        'multipleWorkers',
+        'multipleWorkers.cc',
+        dependencies: vega_dep
+    ),
+    env: test_env
+)
+

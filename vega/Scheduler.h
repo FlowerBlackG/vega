@@ -10,6 +10,8 @@
 #include <thread>
 #include <unordered_set>
 #include <mutex>
+#include <semaphore>
+#include <atomic>
 
 #include <vega/Promise.h>
 
@@ -18,7 +20,7 @@ namespace vega {
 
 
 class Scheduler {
-private:
+protected:
     using Task = std::function<void()>;
 
     struct DelayedTask {
@@ -45,6 +47,7 @@ private:
         }
     };
 
+    /* -------- tasks -------- */
 
     Synchronized<std::queue<Task>> regularTasks;
 
@@ -53,6 +56,21 @@ private:
     > delayedTasks;
     
     Synchronized<std::unordered_set<std::shared_ptr<PromiseStateBase>>> trackedPromises;
+
+    
+    /* -------- workers -------- */
+    
+    /**
+     * If set to 0, the scheduler will use no worker threads.
+     *
+     * Total threads used by a scheduler is nWorkers + 1 (scheduler's main thread).
+     */
+    const size_t nWorkers = 0;
+    std::vector<std::thread> workerThreads;
+    std::counting_semaphore<> taskSemaphore {0};
+    std::atomic<bool> stopWorkers {false};
+    std::atomic<bool> workersStarted {false};
+    std::atomic<size_t> activeWorkers {0};
 
     /**
      *
@@ -64,8 +82,12 @@ private:
 
     size_t removeCompletedTrackedPromises();
 
+    void startWorkers();
+    void stopAndJoinWorkers();
+    void workerThreadMain(size_t workerId);
+
     /**
-     *
+     * Dispatch tasks on scheduler's main thread.
      * 
      * @return size_t N-tasks dispatched. 
      */
@@ -73,7 +95,10 @@ private:
         size_t dispatched = 0;
         
         dispatched += dispatchDelayedTasks();
-        dispatched += dispatchRegularTasks();
+
+        if (!workersStarted) {
+            dispatched += dispatchRegularTasks();
+        }
         
         return dispatched;
     }
@@ -81,7 +106,7 @@ private:
 
     template <typename _Rep, typename _Period>
     void drain(std::chrono::duration<_Rep, _Period> snap) {
-        while (!regularTasks.empty() || !delayedTasks.empty() || !trackedPromises.empty()) {
+        while (!regularTasks.empty() || !delayedTasks.empty() || !trackedPromises.empty() || activeWorkers > 0) {
             size_t dispatched = dispatch();
             size_t removedPromises = removeCompletedTrackedPromises();
 
@@ -103,7 +128,19 @@ private:
 
 
 public:
-    static Scheduler& getInstance() { static Scheduler instance; return instance; }
+    Scheduler(size_t nWorkers = 0);
+    ~Scheduler();
+
+    Scheduler(const Scheduler&) = delete;
+    Scheduler& operator = (const Scheduler&) = delete;
+    Scheduler(Scheduler&&) = delete;
+    Scheduler& operator = (Scheduler&&) = delete;
+
+
+    /**
+     * Get the global single-threaded scheduler.
+     */
+    static Scheduler& getInstance() { static Scheduler instance {0}; return instance; }
     /** alias of getInstance(). */
     static Scheduler& get() { return getInstance(); }
 
@@ -113,6 +150,16 @@ public:
      * @return The current scheduler if running inside a scheduler context, nullptr otherwise.
      */
     static Scheduler* getCurrent();
+
+    /**
+     * Check if the current thread is a worker thread of this scheduler.
+     */
+    bool isCurrentThreadWorker() const;
+
+    /**
+     * Check if the current thread is the main scheduler thread.
+     */
+    bool isCurrentThreadMain() const;
 
     template<typename F>
     requires std::invocable<F> && std::same_as<std::invoke_result_t<F>, Promise<void>>
@@ -136,9 +183,7 @@ public:
     void runBlocking(F&& callable) {
         Scheduler* previousScheduler = Scheduler::setCurrent(this);
 
-        regularTasks.withLock([&callable] (auto& it) {
-            it.emplace([&callable] () { callable(); });
-        });
+        this->addTask([&callable] () { callable(); });
 
         drain();
 
@@ -176,9 +221,12 @@ public:
         regularTasks.withLock([&task] (auto& it) {
             it.emplace(std::move(task));
         });
+        
+        if (workersStarted)
+            taskSemaphore.release();
     }
 
-
+    bool shouldQueueTask() const;
 
     friend Scheduler* setCurrentScheduler(Scheduler* scheduler);
     friend Scheduler* setCurrentScheduler(Scheduler& scheduler);
