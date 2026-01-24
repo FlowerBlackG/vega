@@ -13,6 +13,12 @@
 namespace vega {
 
 
+// forward declaration
+class Scheduler;
+Scheduler* setCurrentScheduler(Scheduler* scheduler);
+Scheduler* getCurrentScheduler();
+
+
 template <typename T = void>
 struct Promise {
     std::shared_ptr<PromiseState<T>> state;
@@ -47,6 +53,7 @@ struct Promise {
     template<typename F>
     static Promise<T> create(F&& executor) {
         Promise<T> p;
+        p.state->scheduler = getCurrentScheduler();
         auto resolve = [state = p.state](T&& value) { state->resolve(std::move(value)); };
         executor(resolve, Rejector{p.state});
         return p;
@@ -54,6 +61,10 @@ struct Promise {
 
     struct promise_type {
         std::shared_ptr<PromiseState<T>> state = std::make_shared<PromiseState<T>>();
+
+        promise_type() {
+            state->scheduler = getCurrentScheduler();
+        }
 
         Promise get_return_object() { return Promise{state}; }
         std::suspend_never initial_suspend() { return {}; }
@@ -69,7 +80,13 @@ struct Promise {
 
         bool await_ready() { return state->status != PromiseStatus::Pending; }
 
-        void await_suspend(std::coroutine_handle<> h) {
+        template<typename PromiseType>
+        void await_suspend(std::coroutine_handle<PromiseType> h) {
+            if constexpr ( requires { h.promise().state; } ) {
+                if (h.promise().state->scheduler == nullptr) {
+                    h.promise().state->scheduler = state->scheduler;
+                }
+            }
             state->addContinuation( [h] () { h.resume(); } );
         }
         
@@ -122,6 +139,7 @@ struct Promise<void> {
     template<typename F>
     static Promise<void> create(F&& executor) {
         Promise<void> p;
+        p.state->scheduler = getCurrentScheduler();
         auto resolve = [state = p.state]() { state->resolve(); };
         executor(resolve, Rejector{p.state});
         return p;
@@ -129,6 +147,10 @@ struct Promise<void> {
 
     struct promise_type {
         std::shared_ptr<PromiseState<void>> state = PromiseState<void>::create();
+
+        promise_type() {
+            state->scheduler = getCurrentScheduler();
+        }
         
         Promise get_return_object() { return Promise{state}; }
         std::suspend_never initial_suspend() { return {}; }
@@ -146,7 +168,14 @@ struct Promise<void> {
             return state->status != PromiseStatus::Pending;
         }
 
-        void await_suspend(std::coroutine_handle<> h) {
+        template<typename PromiseType>
+        void await_suspend(std::coroutine_handle<PromiseType> h) {
+            if constexpr ( requires { h.promise().state; } ) {
+                if (h.promise().state->scheduler == nullptr) {
+                    h.promise().state->scheduler = state->scheduler;
+                }
+            }
+
             state->addContinuation( [h] () { h.resume(); } );
         }
         

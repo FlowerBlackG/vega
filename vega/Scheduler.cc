@@ -5,6 +5,24 @@
 namespace vega {
 
 
+/**
+ * It is user's responsibility (currently) to ensure structured concurrency.
+ */
+static thread_local Scheduler* currentScheduler = nullptr;
+
+
+Scheduler* Scheduler::getCurrent() {
+    return currentScheduler;
+}
+
+
+Scheduler* Scheduler::setCurrent(Scheduler* scheduler) {
+    auto prev = currentScheduler;
+    currentScheduler = scheduler;
+    return prev;
+}
+
+
 size_t Scheduler::dispatchDelayedTasks() {
     auto now = std::chrono::steady_clock::now();
 

@@ -70,6 +70,14 @@ private:
 
     void drain() { drain(std::chrono::microseconds(100)); }
 
+    /**
+     * Set thread's current scheduler as [scheduler].
+     *
+     * @return Previous scheduler.
+     */
+    static Scheduler* setCurrent(Scheduler* scheduler);
+    static Scheduler* setCurrent(Scheduler& scheduler) { return Scheduler::setCurrent(&scheduler); }
+
 
 public:
     static Scheduler& getInstance() { static Scheduler instance; return instance; }
@@ -77,19 +85,33 @@ public:
     static Scheduler& get() { return getInstance(); }
 
 
+    /**
+     * Get the current scheduler of the calling coroutine (also it is the scheduler using the thread).
+     * @return The current scheduler if running inside a scheduler context, nullptr otherwise.
+     */
+    static Scheduler* getCurrent();
+
     template<typename F>
     requires std::invocable<F> && std::same_as<std::invoke_result_t<F>, Promise<void>>
     void runBlocking(F&& callable) {
+        Scheduler* previousScheduler = Scheduler::setCurrent(this);
+
         trackedPromises.emplace(callable().state);
         drain();
+
+        Scheduler::setCurrent(previousScheduler);
     }
 
 
     template<typename F>
     requires std::invocable<F> && std::same_as<std::invoke_result_t<F>, void>
     void runBlocking(F&& callable) {
+        Scheduler* previousScheduler = Scheduler::setCurrent(this);
+
         regularTasks.emplace([&callable] () { callable(); });
         drain();
+
+        Scheduler::setCurrent(previousScheduler);
     }
 
 
@@ -97,6 +119,7 @@ public:
     template<typename _Rep, typename _Period>
     Promise<void> delay(const std::chrono::duration<_Rep, _Period>& duration) {
         Promise<void> ret;
+        ret.state->scheduler = this;
 
         std::chrono::steady_clock::time_point resolveTime = std::chrono::steady_clock::now() + duration;
         
@@ -120,7 +143,26 @@ public:
         regularTasks.push(std::move(task));
     }
 
+
+
+    friend Scheduler* setCurrentScheduler(Scheduler* scheduler);
+    friend Scheduler* setCurrentScheduler(Scheduler& scheduler);
 };
+
+
+inline Scheduler* getCurrentScheduler() {
+    return Scheduler::getCurrent();
+}
+
+
+inline Scheduler* setCurrentScheduler(Scheduler* scheduler) {
+    return Scheduler::setCurrent(scheduler);
+}
+
+
+inline Scheduler* setCurrentScheduler(Scheduler& scheduler) {
+    return Scheduler::setCurrent(scheduler);
+}
 
 
 }  // namespace vega
