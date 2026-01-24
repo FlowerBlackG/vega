@@ -10,7 +10,7 @@ namespace vega {
 void PromiseStateBase::resumeContinuationsOnScheduler(Scheduler* scheduler) {
     scheduler = scheduler ? scheduler : this->scheduler;
 
-    if (scheduler) {
+    if (scheduler && scheduler != Scheduler::getCurrent()) {
         scheduler->addTask([p = this->getPtr()] () {
             p->resumeContinuations();
         });
