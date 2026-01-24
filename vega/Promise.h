@@ -17,7 +17,7 @@ template <typename T = void>
 struct Promise {
     std::shared_ptr<PromiseState<T>> state;
 
-    Promise() : state(std::make_shared<PromiseState<T>>()) {}
+    Promise() : state(PromiseState<T>::create()) {}
     Promise(std::shared_ptr<PromiseState<T>> state) : state(state) {}
 
     static Promise<T> resolve(T&& value) {
@@ -89,7 +89,7 @@ struct Promise<void> {
 
     std::shared_ptr<PromiseState<void>> state;
 
-    Promise() : state(std::make_shared<PromiseState<void>>()) {}
+    Promise() : state(PromiseState<void>::create()) {}
     Promise(std::shared_ptr<PromiseState<void>> state) : state(state) {}
 
 
@@ -128,7 +128,7 @@ struct Promise<void> {
     }
 
     struct promise_type {
-        std::shared_ptr<PromiseState<void>> state = std::make_shared<PromiseState<void>>();
+        std::shared_ptr<PromiseState<void>> state = PromiseState<void>::create();
         
         Promise get_return_object() { return Promise{state}; }
         std::suspend_never initial_suspend() { return {}; }

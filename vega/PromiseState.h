@@ -6,16 +6,40 @@
 #include <optional>
 #include <vector>
 #include <functional>
+#include <memory>
 
 
 namespace vega {
 
 
+// forward declaration
+class Scheduler;
+
+
 enum class PromiseStatus { Pending, Fulfilled, Rejected };
 
 
-class PromiseStateBase {
+class PromiseStateBase : public std::enable_shared_from_this<PromiseStateBase> {
+protected:
+
+    PromiseStateBase() = default;
+
+
 public:
+
+    static std::shared_ptr<PromiseStateBase> create() {
+        return std::make_shared<PromiseStateBase>(PromiseStateBase{});
+    }
+
+    template <typename T = PromiseStateBase>
+    std::shared_ptr<T> getPtr() {
+        return shared_from_this();
+    }
+
+
+    std::shared_ptr<PromiseStateBase> getPtr() {
+        return this->getPtr<>();
+    }
 
     virtual ~PromiseStateBase() = default;
 
@@ -23,6 +47,14 @@ public:
 
     PromiseStatus status = PromiseStatus::Pending;
     std::exception_ptr exception;
+
+    /**
+     * It is user's responsibility to ensure this is not destroyed before promise ends.
+     *
+     * If set, the promise will be scheduled on the given scheduler.
+     * If null, the promise will be scheduled on the current thread.
+     */
+    Scheduler* scheduler = nullptr;
     
 protected:
 
@@ -45,6 +77,9 @@ public:
     }
 
 
+    void resumeContinuationsOnScheduler(Scheduler* scheduler = nullptr);
+
+
     void reject(std::exception_ptr e) {
         if (status != PromiseStatus::Pending) {
             return;
@@ -53,14 +88,22 @@ public:
         exception = e;
         status = PromiseStatus::Rejected;
         
-        resumeContinuations();
+        resumeContinuationsOnScheduler();
     }
 };
 
 
 template <typename T>
 class PromiseState : public PromiseStateBase {
+protected:
+    PromiseState() = default;
+
 public:
+    static std::shared_ptr<PromiseState<T>> create() {
+        return std::make_shared<PromiseState<T>>(PromiseState<T>{});
+    }
+
+
     std::optional<T> value;
 
 
@@ -72,14 +115,22 @@ public:
         value = std::move(v);
         status = PromiseStatus::Fulfilled;
         
-        resumeContinuations();
+        resumeContinuationsOnScheduler();
     }
 };
 
 
 template<>
 struct PromiseState<void> : public PromiseStateBase {
+protected:
+    
+    PromiseState() = default;
+
 public:
+    static std::shared_ptr<PromiseState<void>> create() {
+        return std::make_shared<PromiseState<void>>(PromiseState<void>{});
+    }
+
     void resolve() {
         if (status != PromiseStatus::Pending) {
             return;
@@ -87,7 +138,7 @@ public:
 
         status = PromiseStatus::Fulfilled;
         
-        resumeContinuations();
+        resumeContinuationsOnScheduler();
     }
 };
 

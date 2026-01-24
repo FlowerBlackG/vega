@@ -115,6 +115,11 @@ public:
         func();
     }
 
+
+    void addTask(Task task) {
+        regularTasks.push(std::move(task));
+    }
+
 };
 
 
