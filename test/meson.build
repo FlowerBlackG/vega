@@ -81,3 +81,14 @@ test(
     env: test_env
 )
 
+
+test(
+    'promiseAll',
+    executable(
+        'promiseAll',
+        'promiseAll.cc',
+        dependencies: vega_dep
+    ),
+    env: test_env
+)
+
