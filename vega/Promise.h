@@ -60,7 +60,7 @@ struct Promise {
     }
 
     struct promise_type {
-        std::shared_ptr<PromiseState<T>> state = std::make_shared<PromiseState<T>>();
+        std::shared_ptr<PromiseState<T>> state = PromiseState<T>::create();
 
         promise_type() {
             state->scheduler = getCurrentScheduler();
