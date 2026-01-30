@@ -2,6 +2,7 @@
 test_env = environment()
 test_env.prepend('PATH', meson.project_build_root())
 
+subdir('io')
 
 test(
     'delay',
