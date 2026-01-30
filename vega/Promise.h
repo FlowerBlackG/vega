@@ -32,6 +32,12 @@ struct Promise {
         return p;
     }
 
+    static Promise<T> resolve(T& value) {
+        Promise<T> p;
+        p.state->resolve(value);
+        return p;
+    }
+
     static Promise<T> reject(std::exception_ptr e) {
         Promise<T> p;
         p.state->reject(e);
