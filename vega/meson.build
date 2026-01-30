@@ -1,3 +1,4 @@
+subdir('io')
 
 vega_sources += files(
     'Scheduler.cc',
