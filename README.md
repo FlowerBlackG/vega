@@ -8,16 +8,16 @@ A modern, lightweight C++ coroutine framework featuring TypeScript-like Promise 
 
 ## Vega Features
 
-* [X] TypeScript-like Promise style API.
-* [X] Multi-threaded execution.
-* [X] io_uring-based file operations (falls back to fstream if not supported).
-* [ ] io_uring-based networking.
+✅️ TypeScript-like Promise style API.
+✅️ Multi-threaded execution.
+✅️ io_uring-based file operations (falls back to fstream if not supported).
+🚧 io_uring-based networking.
 
 ## Packaging
 
-* [X] Copy the whole `vega` folder to your project.
-* [ ] Pre-compiled libvega.so and vega.dll.
-* [ ] Well-documented and organized headers.
+✅️ Copy the whole `vega` folder to your project.
+🚧 Pre-compiled libvega.so and vega.dll.
+🚧 Well-documented and organized headers.
 
 ## Examples
 
