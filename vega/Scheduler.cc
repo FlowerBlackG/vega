@@ -120,6 +120,19 @@ void Scheduler::workerThreadMain(size_t workerId) {
 }
 
 
+size_t Scheduler::dispatch() {
+    size_t dispatched = 0;
+    
+    dispatched += dispatchDelayedTasks();
+
+    if (!workersStarted) {
+        dispatched += dispatchRegularTasks();
+    return dispatched;
+}
+
+
+
+
 size_t Scheduler::dispatchDelayedTasks() {
     auto now = std::chrono::steady_clock::now();
 

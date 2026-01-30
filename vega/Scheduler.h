@@ -91,17 +91,7 @@ protected:
      * 
      * @return size_t N-tasks dispatched. 
      */
-    size_t dispatch() {
-        size_t dispatched = 0;
-        
-        dispatched += dispatchDelayedTasks();
-
-        if (!workersStarted) {
-            dispatched += dispatchRegularTasks();
-        }
-        
-        return dispatched;
-    }
+    size_t dispatch();
 
 
     template <typename _Rep, typename _Period>
