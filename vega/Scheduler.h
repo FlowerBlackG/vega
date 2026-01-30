@@ -19,6 +19,9 @@
 namespace vega {
 
 
+namespace io { class IoUring; } 
+
+
 class Scheduler {
 protected:
     using Task = std::function<void()>;
@@ -107,6 +110,10 @@ protected:
             }
         }
     }
+
+#if defined(__linux__)
+    size_t pollIoUringIfInitialized();
+#endif
 
     void drain() { drain(std::chrono::microseconds(100)); }
 
@@ -236,6 +243,11 @@ public:
 
     friend Scheduler* setCurrentScheduler(Scheduler* scheduler);
     friend Scheduler* setCurrentScheduler(Scheduler& scheduler);
+
+#if defined(__linux__)
+    bool threadIoUringInitialized();
+    io::IoUring& getThreadIoUring();
+#endif
 };
 
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MulanPSL-2.0
 
 #include <vega/Scheduler.h>
+#include <vega/io/IoUring.h>
 
 namespace vega {
 
@@ -14,6 +15,8 @@ static thread_local Scheduler* currentScheduler = nullptr;
  * SIZE_MAX means non-worker thread (maybe a scheduler's main thread, or not belong to any scheduler).
  */
 static thread_local size_t workerThreadId = SIZE_MAX;
+
+static thread_local std::unique_ptr<io::IoUring> threadIoUring;
 
 
 Scheduler::Scheduler(size_t nWorkers) : nWorkers(nWorkers > 1 ? nWorkers : 0) {
@@ -30,6 +33,17 @@ Scheduler::~Scheduler() {
 Scheduler* Scheduler::getCurrent() {
     return currentScheduler;
 }
+
+
+
+#if defined(__linux__)
+size_t Scheduler::pollIoUringIfInitialized() {
+    if (!threadIoUringInitialized())
+        return 0;
+    
+    return getThreadIoUring().poll();
+}
+#endif
 
 
 Scheduler* Scheduler::setCurrent(Scheduler* scheduler) {
@@ -93,10 +107,15 @@ void Scheduler::workerThreadMain(size_t workerId) {
     workerThreadId = workerId;
 
     while (!stopWorkers) {
-        taskSemaphore.acquire();
+        bool semaphoreAcquired = taskSemaphore.try_acquire_for(std::chrono::milliseconds(10));
 
         if (stopWorkers)
             break;
+
+        pollIoUringIfInitialized();
+
+        if (!semaphoreAcquired)
+            continue;
 
         std::optional<Task> task;
         regularTasks.withLock([&task] (auto& q) {
@@ -127,6 +146,10 @@ size_t Scheduler::dispatch() {
 
     if (!workersStarted) {
         dispatched += dispatchRegularTasks();
+    }
+
+    dispatched += pollIoUringIfInitialized();
+    
     return dispatched;
 }
 
@@ -210,5 +233,20 @@ size_t Scheduler::removeCompletedTrackedPromises() {
     });
 }
     
+#if defined(__linux__)
+bool Scheduler::threadIoUringInitialized() {
+    return threadIoUring != nullptr;
+}
+
+
+
+io::IoUring& Scheduler::getThreadIoUring() {
+    if (!threadIoUring) {
+        threadIoUring = std::make_unique<io::IoUring>();
+    }
+
+    return *threadIoUring;
+}
+#endif
 
 }  // namespace vega
