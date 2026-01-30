@@ -131,6 +131,12 @@ size_t Scheduler::dispatch() {
 }
 
 
+bool Scheduler::hasPendingTasks() {
+    return !regularTasks.empty() 
+        || !delayedTasks.empty() 
+        || !trackedPromises.empty() 
+        || activeWorkers > 0;
+}
 
 
 size_t Scheduler::dispatchDelayedTasks() {

@@ -93,10 +93,12 @@ protected:
      */
     size_t dispatch();
 
+    bool hasPendingTasks();
+
 
     template <typename _Rep, typename _Period>
     void drain(std::chrono::duration<_Rep, _Period> snap) {
-        while (!regularTasks.empty() || !delayedTasks.empty() || !trackedPromises.empty() || activeWorkers > 0) {
+        while (this->hasPendingTasks()) {
             size_t dispatched = dispatch();
             size_t removedPromises = removeCompletedTrackedPromises();
 
