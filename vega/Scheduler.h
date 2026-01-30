@@ -161,6 +161,20 @@ public:
      */
     bool isCurrentThreadMain() const;
 
+
+    void track(std::shared_ptr<PromiseStateBase> promise) {
+        trackedPromises.withLock([&promise] (auto& it) {
+            it.emplace(std::move(promise));
+        });
+    }
+
+
+    template <typename T>
+    void track(const Promise<T>& promise) {
+        this->track(promise.state);
+    }
+
+
     template<typename F>
     requires std::invocable<F> && std::same_as<std::invoke_result_t<F>, Promise<void>>
     void runBlocking(F&& callable) {
