@@ -1,6 +1,23 @@
 # Vega C++ Coroutine Framework
 
+A modern, lightweight C++ coroutine framework featuring TypeScript-like Promise API, multi-threading support, and more.
+
+## CI
+
 [![Meson Test](https://github.com/FlowerBlackG/vega/actions/workflows/meson-test.yml/badge.svg)](https://github.com/FlowerBlackG/vega/actions/workflows/meson-test.yml)
+
+## Vega Features
+
+* [X] TypeScript-like Promise style API.
+* [X] Multi-threaded execution.
+* [X] io_uring-based file operations (falls back to fstream if not supported).
+* [ ] io_uring-based networking.
+
+## Packaging
+
+* [X] Copy the whole `vega` folder to your project.
+* [ ] Pre-compiled libvega.so and vega.dll.
+* [ ] Well-documented and organized headers.
 
 ## Examples
 
