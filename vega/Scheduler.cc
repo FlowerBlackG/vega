@@ -119,8 +119,9 @@ void Scheduler::workerThreadMain(size_t workerId) {
         if (stopWorkers)
             break;
 
-        if (!semaphoreAcquired && !ioUringTaskResolved) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        if (!semaphoreAcquired) {
+            if (!ioUringTaskResolved)
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
             continue;
         }
 
