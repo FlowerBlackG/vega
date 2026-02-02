@@ -107,15 +107,17 @@ void Scheduler::workerThreadMain(size_t workerId) {
     workerThreadId = workerId;
 
     while (!stopWorkers) {
-        bool semaphoreAcquired = taskSemaphore.try_acquire_for(std::chrono::milliseconds(10));
+        bool semaphoreAcquired = taskSemaphore.try_acquire();
 
+        auto ioUringTaskResolved = pollIoUringIfInitialized();
+        
         if (stopWorkers)
             break;
 
-        pollIoUringIfInitialized();
-
-        if (!semaphoreAcquired)
+        if (!semaphoreAcquired && !ioUringTaskResolved) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
             continue;
+        }
 
         std::optional<Task> task;
         regularTasks.withLock([&task] (auto& q) {
