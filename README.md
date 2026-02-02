@@ -23,6 +23,49 @@ Vega is a work in progress. Here's what's done and what's coming.
 * 🚧 Pre-compiled libvega.so and vega.dll.
 * 🚧 Better documented and organized headers.
 
+## 🤠 Use Vega
+
+### For Meson users
+
+Using Vega in your meson project is really easy.
+
+First, add `vega.wrap` to your project's `subprojects` directory:
+
+```ini
+[wrap-git]
+url = https://github.com/FlowerBlackG/vega.git
+revision = HEAD
+depth = 1
+
+[provide]
+vega = vega_dep
+```
+
+Next, in your `meson.build`, add:
+
+```meson
+vega = dependency('vega', required: true)
+```
+
+Finally, write some code like:
+
+```cpp
+#include <chrono>
+#include <vega/vega.h>
+using namespace vega;
+
+Promise<> suspendMain() {
+    co_await Scheduler::getCurrent()->delay(std::chrono::seconds(3));
+}
+
+int main() {
+    Scheduler::get().runBlocking(suspendMain);
+    return 0;
+}
+```
+
+and enjoy :D
+
 ## 📚 Examples
 
 **setTimeout**
