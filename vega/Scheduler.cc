@@ -240,13 +240,16 @@ size_t Scheduler::removeCompletedTrackedPromises() {
     });
 }
     
-#if defined(__linux__)
 bool Scheduler::threadIoUringInitialized() {
+#if defined(__linux__)
     return threadIoUring != nullptr;
+#else
+    return false;
+#endif
 }
 
 
-
+#if defined(__linux__)
 io::IoUring& Scheduler::getThreadIoUring() {
     if (!threadIoUring) {
         threadIoUring = std::make_unique<io::IoUring>();

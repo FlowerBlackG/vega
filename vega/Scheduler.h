@@ -246,8 +246,8 @@ public:
     friend Scheduler* setCurrentScheduler(Scheduler* scheduler);
     friend Scheduler* setCurrentScheduler(Scheduler& scheduler);
 
-#if defined(__linux__)
     bool threadIoUringInitialized();
+#if defined(__linux__)
     io::IoUring& getThreadIoUring();
 #endif
 };
