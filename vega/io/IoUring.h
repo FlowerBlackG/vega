@@ -76,9 +76,16 @@ public:
 
     /**
      * 
-     * @param user_data 
+     * @param sqe.user_data 
      */
     Promise<CompleteQueueEntry> wait(std::uint64_t);
+
+    /**
+     * 
+     * @param sqe.user_data
+     */
+    Promise<int32_t> waitRes(std::uint64_t);
+    
 
     size_t poll();
 

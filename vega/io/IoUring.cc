@@ -99,6 +99,11 @@ Promise<IoUring::CompleteQueueEntry> IoUring::wait(std::uint64_t ticket) {
 }
 
 
+Promise<int32_t> IoUring::waitRes(uint64_t userData) {
+    co_return (co_await this->wait(userData)).res;
+}
+
+
 size_t IoUring::poll() {
     size_t count = 0;
 
