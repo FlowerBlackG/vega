@@ -16,7 +16,9 @@ static thread_local Scheduler* currentScheduler = nullptr;
  */
 static thread_local size_t workerThreadId = SIZE_MAX;
 
+#if defined(__linux__)
 static thread_local std::unique_ptr<io::IoUring> threadIoUring;
+#endif
 
 
 Scheduler::Scheduler(size_t nWorkers) : nWorkers(nWorkers > 1 ? nWorkers : 0) {
