@@ -111,9 +111,11 @@ protected:
         }
     }
 
-#if defined(__linux__)
+    /**
+     * For platforms does not support io_uring, this function will return 0 immediately.
+     * @return size_t N-tasks resolved.
+     */
     size_t pollIoUringIfInitialized();
-#endif
 
     void drain() { drain(std::chrono::microseconds(100)); }
 

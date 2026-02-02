@@ -36,14 +36,17 @@ Scheduler* Scheduler::getCurrent() {
 
 
 
-#if defined(__linux__)
 size_t Scheduler::pollIoUringIfInitialized() {
+#if defined(__linux__)
     if (!threadIoUringInitialized())
         return 0;
     
     return getThreadIoUring().poll();
-}
+
+#else
+    return 0;
 #endif
+}
 
 
 Scheduler* Scheduler::setCurrent(Scheduler* scheduler) {
