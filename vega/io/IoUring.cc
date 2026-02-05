@@ -93,14 +93,25 @@ Promise<IoUring::CompleteQueueEntry> IoUring::wait(std::uint64_t ticket) {
     if (coroScheduler)
         coroScheduler->track(promise);
 
-    this->submit();
+    return promise;
+}
 
+
+Promise<IoUring::CompleteQueueEntry> IoUring::submitAndWait(io_uring_sqe* sqe) {
+    auto promise = this->wait(sqe->user_data);
+    this->submit();
     return promise;
 }
 
 
 Promise<int32_t> IoUring::waitRes(uint64_t userData) {
     co_return (co_await this->wait(userData)).res;
+}
+
+
+Promise<int32_t> IoUring::submitAndWaitRes(io_uring_sqe* sqe) {
+    auto promise = this->submitAndWait(sqe);
+    co_return (co_await promise).res;
 }
 
 

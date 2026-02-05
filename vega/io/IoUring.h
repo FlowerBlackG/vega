@@ -75,16 +75,28 @@ public:
     void submit();
 
     /**
-     * 
+     * Wait for the result of an already submitted SQE.
+     *
      * @param sqe.user_data 
      */
     Promise<CompleteQueueEntry> wait(std::uint64_t);
 
     /**
+     * Submit a SQE and wait for its result. 
+     */
+    Promise<CompleteQueueEntry> submitAndWait(io_uring_sqe*);
+
+    /**
+     * Wait for the result of an already submitted SQE, and get result.res code.
      * 
      * @param sqe.user_data
      */
     Promise<int32_t> waitRes(std::uint64_t);
+
+    /**
+     * Submit a SQE and wait for its result.res code. 
+     */
+    Promise<int32_t> submitAndWaitRes(io_uring_sqe*);
     
 
     size_t poll();

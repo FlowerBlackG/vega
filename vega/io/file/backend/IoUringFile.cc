@@ -60,7 +60,7 @@ Promise<size_t> IoUringFile::read(void* buffer, size_t size, long offset) {
     io_uring_sqe* sqe = co_await threadIoUring().getSqe();
 
     io_uring_prep_read(sqe, fd_, buffer, size, offset);
-    auto ret = co_await threadIoUring().wait(sqe->user_data);
+    auto ret = co_await threadIoUring().submitAndWait(sqe);
 
     if (ret.res < 0)
         throw std::runtime_error("read failed (IoUringFile)");
@@ -79,7 +79,7 @@ Promise<size_t> IoUringFile::write(const void* buffer, size_t size, long offset)
     
     io_uring_prep_write(sqe, fd_, buffer, size, offset);
 
-    auto ret = co_await threadIoUring().wait(sqe->user_data);
+    auto ret = co_await threadIoUring().submitAndWait(sqe);
 
     if (ret.res < 0)
         throw std::runtime_error("read failed (IoUringFile)");
