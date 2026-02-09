@@ -19,7 +19,8 @@ Scheduler& getCurrentScheduler();
 
 
 template <typename T = void>
-struct Promise {
+class Promise {
+public:
     std::shared_ptr<PromiseState<T>> state;
 
     Promise() : state(PromiseState<T>::create()) {}
@@ -107,8 +108,8 @@ struct Promise {
 
 
 template<>
-struct Promise<void> {
-
+class Promise<void> {
+public:
     std::shared_ptr<PromiseState<void>> state;
 
     Promise() : state(PromiseState<void>::create()) {}
