@@ -1,9 +1,6 @@
-subdir('file')
-subdir('net')
-
 
 if host_machine.system() == 'linux'
     vega_sources += files(
-        'IoUring.cc',
+        'IoUringInet4StreamSocket.cc',
     )
 endif

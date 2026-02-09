@@ -1,12 +1,10 @@
 
-subdir('net')
-
 if host_machine.system() == 'linux'
     test(
-        'iouringFile',
+        'ioUringHttpGet',
         executable(
-            'iouringFile',
-            'iouringFile.cc',
+            'ioUringHttpGet',
+            'ioUringHttpGet.cc',
             dependencies: vega_dep
         ),
         env: test_env
