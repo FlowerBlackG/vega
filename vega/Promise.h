@@ -15,8 +15,7 @@ namespace vega {
 
 // forward declaration
 class Scheduler;
-Scheduler* setCurrentScheduler(Scheduler* scheduler);
-Scheduler* getCurrentScheduler();
+Scheduler& getCurrentScheduler();
 
 
 template <typename T = void>
@@ -59,7 +58,7 @@ struct Promise {
     template<typename F>
     static Promise<T> create(F&& executor) {
         Promise<T> p;
-        p.state->scheduler = getCurrentScheduler();
+        p.state->scheduler = &getCurrentScheduler();
         auto resolve = [state = p.state](T&& value) { state->resolve(std::move(value)); };
         executor(resolve, Rejector{p.state});
         return p;
@@ -69,7 +68,7 @@ struct Promise {
         std::shared_ptr<PromiseState<T>> state = PromiseState<T>::create();
 
         promise_type() {
-            state->scheduler = getCurrentScheduler();
+            state->scheduler = &getCurrentScheduler();
         }
 
         Promise get_return_object() { return Promise{state}; }
@@ -145,7 +144,7 @@ struct Promise<void> {
     template<typename F>
     static Promise<void> create(F&& executor) {
         Promise<void> p;
-        p.state->scheduler = getCurrentScheduler();
+        p.state->scheduler = &getCurrentScheduler();
         auto resolve = [state = p.state]() { state->resolve(); };
         executor(resolve, Rejector{p.state});
         return p;
@@ -155,7 +154,7 @@ struct Promise<void> {
         std::shared_ptr<PromiseState<void>> state = PromiseState<void>::create();
 
         promise_type() {
-            state->scheduler = getCurrentScheduler();
+            state->scheduler = &getCurrentScheduler();
         }
         
         Promise get_return_object() { return Promise{state}; }

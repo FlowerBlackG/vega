@@ -148,9 +148,12 @@ public:
 
     /**
      * Get the current scheduler of the calling coroutine (also it is the scheduler using the thread).
-     * @return The current scheduler if running inside a scheduler context, nullptr otherwise.
+     *
+     * You should only call this inside coroutine context, otherwise the behavior is undefined.
+     *
+     * @return The current scheduler if running inside a scheduler context, undefined-behavior otherwise.
      */
-    static Scheduler* getCurrent();
+    static Scheduler& getCurrent();
 
     /**
      * Check if the current thread is a worker thread of this scheduler.
@@ -253,7 +256,10 @@ public:
 };
 
 
-inline Scheduler* getCurrentScheduler() {
+/**
+ * You should only call this inside coroutine context, otherwise the behavior is undefined.
+ */
+inline Scheduler& getCurrentScheduler() {
     return Scheduler::getCurrent();
 }
 

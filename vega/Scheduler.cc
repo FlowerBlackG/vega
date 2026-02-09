@@ -32,8 +32,8 @@ Scheduler::~Scheduler() {
 }
 
 
-Scheduler* Scheduler::getCurrent() {
-    return currentScheduler;
+Scheduler& Scheduler::getCurrent() {
+    return *currentScheduler;
 }
 
 

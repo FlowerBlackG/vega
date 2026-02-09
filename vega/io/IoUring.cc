@@ -89,9 +89,7 @@ Promise<IoUring::CompleteQueueEntry> IoUring::wait(std::uint64_t ticket) {
 
 
     auto promise = (waitingSqes_[ticket] = Promise<CompleteQueueEntry>());
-    auto coroScheduler = Scheduler::getCurrent();
-    if (coroScheduler)
-        coroScheduler->track(promise);
+    Scheduler::getCurrent().track(promise);
 
     return promise;
 }
