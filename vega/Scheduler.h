@@ -249,7 +249,7 @@ public:
 
     bool threadIoUringInitialized();
 #if defined(__linux__)
-    io::IoUring& getThreadIoUring();
+    static io::IoUring& getThreadIoUring();
 #endif
 };
 
