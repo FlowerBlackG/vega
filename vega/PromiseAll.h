@@ -119,7 +119,7 @@ auto promiseAll(Args&&... args) {
     
     // --- Setup Result Promise ---
     Promise<ResultT> result;
-    result.state->scheduler = getCurrentScheduler();
+    result.state->scheduler = &getCurrentScheduler();
 
     // Handle empty case
     if constexpr (N == 0) {

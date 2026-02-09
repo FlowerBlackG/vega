@@ -13,12 +13,6 @@
 
 namespace vega::io {
 
-
-IoUring& IoUringFile::threadIoUring() {
-    return Scheduler::getCurrent()->getThreadIoUring();
-}
-
-
 IoUringFile::IoUringFile(IoUringFile&& other) {
     fd_ = other.fd_;
     other.fd_ = -1;
@@ -73,10 +67,10 @@ Promise<size_t> IoUringFile::read(void* buffer, size_t size, long offset) {
     if (offset == -1)
         offset = readPos_;
 
-    io_uring_sqe* sqe = co_await threadIoUring().getSqe();
+    io_uring_sqe* sqe = co_await IoUring::getThreadIoUring().getSqe();
 
     io_uring_prep_read(sqe, fd_, buffer, size, offset);
-    auto ret = co_await threadIoUring().submitAndWait(sqe);
+    auto ret = co_await IoUring::getThreadIoUring().submitAndWait(sqe);
 
     if (ret.res < 0)
         throw std::runtime_error("read failed (IoUringFile)");
@@ -91,11 +85,11 @@ Promise<size_t> IoUringFile::write(const void* buffer, size_t size, long offset)
     if (offset == -1)
         offset = writePos_;
 
-    io_uring_sqe* sqe = co_await threadIoUring().getSqe();
+    io_uring_sqe* sqe = co_await IoUring::getThreadIoUring().getSqe();
     
     io_uring_prep_write(sqe, fd_, buffer, size, offset);
 
-    auto ret = co_await threadIoUring().submitAndWait(sqe);
+    auto ret = co_await IoUring::getThreadIoUring().submitAndWait(sqe);
 
     if (ret.res < 0)
         throw std::runtime_error("read failed (IoUringFile)");

@@ -32,7 +32,7 @@ static void recordThreadUsage() {
 
 Promise<int> cpuIntensiveTask(int taskId) {
     // Encourage scheduler to dispatch task to worker thread(s).
-    co_await Scheduler::getCurrent()->delay(std::chrono::milliseconds(0));
+    co_await Scheduler::getCurrent().delay(std::chrono::milliseconds(0));
 
     {
         std::lock_guard<std::mutex> lock(outputMutex);

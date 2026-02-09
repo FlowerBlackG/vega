@@ -105,7 +105,7 @@ Promise<> testAsyncPromises() {
     std::println("Test 6: Async promises with delay...");
     
     auto makeDelayedPromise = [](int value, int delayMs) -> Promise<int> {
-        co_await Scheduler::getCurrent()->delay(std::chrono::milliseconds(delayMs));
+        co_await Scheduler::getCurrent().delay(std::chrono::milliseconds(delayMs));
         co_return value;
     };
     
