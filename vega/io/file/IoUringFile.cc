@@ -19,6 +19,22 @@ IoUring& IoUringFile::threadIoUring() {
 }
 
 
+IoUringFile::IoUringFile(IoUringFile&& other) {
+    fd_ = other.fd_;
+    other.fd_ = -1;
+}
+
+
+IoUringFile& IoUringFile::operator = (IoUringFile&& other) {
+    if (this != &other) {
+        this->fd_ = other.fd_;
+        other.fd_ = -1;
+    }
+    
+    return *this;
+}
+
+
 bool IoUringFile::open(const std::string& path, FileOpenMode mode) {
     int flags = 0;
 

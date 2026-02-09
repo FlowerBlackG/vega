@@ -23,6 +23,10 @@ protected:
 
 public:
     IoUringFile() {}
+
+    IoUringFile(IoUringFile&&);
+    IoUringFile& operator = (IoUringFile&&);
+
     virtual ~IoUringFile() override { close(); }
 
     virtual bool open(const std::string& path, FileOpenMode mode) override;
