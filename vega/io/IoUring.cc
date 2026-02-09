@@ -156,6 +156,10 @@ size_t IoUring::poll() {
     return count;
 }
 
+IoUring& IoUring::getThreadIoUring() {
+    return Scheduler::getThreadIoUring();
+}
+
 
 }  // namespace vega::io
 

@@ -101,6 +101,8 @@ public:
 
     size_t poll();
 
+    static IoUring& getThreadIoUring();
+
 };
 
 
