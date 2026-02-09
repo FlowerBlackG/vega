@@ -1,5 +1,5 @@
-subdir('backend')
 
 vega_sources += files(
-    'File.cc',
+    'IoUringFile.cc',
+    'StreamFile.cc',
 )

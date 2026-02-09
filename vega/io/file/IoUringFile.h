@@ -6,7 +6,7 @@
 #if defined(__linux__)
 
 #include <liburing.h>
-#include <vega/io/file/backend/FileBackend.h>
+#include <vega/io/file/File.h>
 
 
 namespace vega::io {
@@ -14,7 +14,7 @@ namespace vega::io {
 class IoUring;
 
 
-class IoUringFile : public FileBackend {
+class IoUringFile : public File {
 protected:
     int fd_ = -1;
 
@@ -23,14 +23,11 @@ protected:
 
 public:
     IoUringFile() {}
-
-    virtual constexpr FileBackendType type() const override {
-        return FileBackendType::IoUring;
-    }
+    virtual ~IoUringFile() override { close(); }
 
     virtual bool open(const std::string& path, FileOpenMode mode) override;
 
-    virtual bool isOpen() override {
+    virtual bool isOpen() const override {
         return fd_ != -1;
     }
 

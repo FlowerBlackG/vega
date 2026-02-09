@@ -2,7 +2,7 @@
 
 #include <vega/Scheduler.h>
 #include <vega/Promise.h>
-#include <vega/io/file/backend/StreamFile.h>
+#include <vega/io/file/StreamFile.h>
 
 #include <filesystem>
 

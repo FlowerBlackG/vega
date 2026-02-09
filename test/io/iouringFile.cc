@@ -20,8 +20,8 @@ const char* TEST_FILE_PATH = "./__test_iouring_tmp.txt";
 
 
 static void assertFileType(vega::io::File& file) {
-    if (file.backendType() != vega::io::FileBackendType::IoUring) {
-        println("[FAIL] File backend type mismatch: expected IoUring, got {}", (std::int64_t) file.backendType());
+    if (!file.is<vega::io::IoUringFile>()) {
+        println("[FAIL] File backend type mismatch: expected IoUring, got {}", typeid(file).name());
         std::cout.flush();
         assert(false);
     }
@@ -34,7 +34,8 @@ Promise<bool> testBasicWriteRead() {
 
     println("=== Test 1: Basic Write and Read ===");
     
-    vega::io::File file;
+    vega::io::IoUringFile _file;
+    vega::io::File& file = _file;
 
     if (!file.open(TEST_FILE_PATH, vega::io::FileOpenMode::ReadWrite | vega::io::FileOpenMode::Truncate)) {
         println("[FAIL] Failed to open file for write/read");
@@ -82,7 +83,9 @@ Promise<bool> testBasicWriteRead() {
 Promise<bool> testSequentialWrites() {
     println("\n=== Test 2: Sequential Writes ===");
     
-    vega::io::File file;
+    vega::io::IoUringFile _file;
+    vega::io::File& file = _file;
+    
     if (!file.open(TEST_FILE_PATH, vega::io::FileOpenMode::ReadWrite)) {
         println("[FAIL] Failed to open file");
         co_return false;
@@ -142,7 +145,9 @@ Promise<bool> testSequentialWrites() {
 Promise<bool> testOffsetRead() {
     println("\n=== Test 3: Read at Specific Offset ===");
     
-    vega::io::File file;
+    vega::io::IoUringFile _file;
+    vega::io::File& file = _file;
+
     if (!file.open(TEST_FILE_PATH, vega::io::FileOpenMode::ReadWrite)) {
         println("[FAIL] Failed to open file");
         co_return false;
@@ -175,7 +180,9 @@ Promise<bool> testOffsetRead() {
 Promise<bool> testOffsetWrite() {
     println("\n=== Test 4: Write at Specific Offset ===");
     
-    vega::io::File file;
+    vega::io::IoUringFile _file;
+    vega::io::File& file = _file;
+
     if (!file.open(TEST_FILE_PATH, vega::io::FileOpenMode::ReadWrite)) {
         println("[FAIL] Failed to open file");
         co_return false;
@@ -213,7 +220,9 @@ Promise<bool> testOffsetWrite() {
 Promise<bool> testLargeBuffer() {
     println("\n=== Test 5: Large Buffer Write/Read ===");
     
-    vega::io::File file;
+    vega::io::IoUringFile _file;
+    vega::io::File& file = _file;
+    
     if (!file.open(TEST_FILE_PATH, vega::io::FileOpenMode::ReadWrite)) {
         println("[FAIL] Failed to open file");
         co_return false;

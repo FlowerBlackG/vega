@@ -5,25 +5,23 @@
 
 #include <fstream>
 
-#include <vega/io/file/backend/FileBackend.h>
+#include <vega/io/file/File.h>
 
 
 namespace vega::io {
 
-class StreamFile : public FileBackend {
+class StreamFile : public File {
 protected:
     std::fstream stream_;
 
 public:
     StreamFile() {}
 
-    virtual constexpr FileBackendType type() const override {
-        return FileBackendType::Stream;
-    }
+    virtual ~StreamFile() override { close(); }
 
     virtual bool open(const std::string& path, FileOpenMode mode) override;
 
-    virtual bool isOpen() override {
+    virtual bool isOpen() const override {
         return stream_.is_open();
     }
 
