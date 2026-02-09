@@ -293,7 +293,7 @@ Promise<> blockingMain() {
 
 
 int main() {
-    Scheduler::get().runBlocking(blockingMain);
+    Scheduler::getDefault().runBlocking(blockingMain);
     cleanupTestFile();
     return 0;
 }

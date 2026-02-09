@@ -141,9 +141,7 @@ public:
     /**
      * Get the global single-threaded scheduler.
      */
-    static Scheduler& getInstance() { static Scheduler instance {0}; return instance; }
-    /** alias of getInstance(). */
-    static Scheduler& get() { return getInstance(); }
+    static Scheduler& getDefault() { static Scheduler instance {0}; return instance; }
 
 
     /**

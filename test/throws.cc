@@ -28,7 +28,7 @@ Promise<> throwInThrow(bool await) {
 Promise<> suspendMain() {
     try {
         throws();
-        co_await Scheduler::get().delay(std::chrono::milliseconds(20));
+        co_await Scheduler::getCurrent().delay(std::chrono::milliseconds(20));
     } 
     catch (...) {
         assert(false);
@@ -68,7 +68,7 @@ Promise<> suspendMain() {
 
 
 int main() {
-    Scheduler::get().runBlocking(suspendMain);
+    Scheduler::getDefault().runBlocking(suspendMain);
     assert(suspendMainCompleted);
     return 0;
 }

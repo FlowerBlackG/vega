@@ -17,7 +17,7 @@ vega::Promise<void> suspendMain() {
     int seq = 0;
 
     for (int i = 0; i < N_PROMISES; i++) {
-        auto promise = vega::Scheduler::get().setTimeout([i, &results, &seq] () {
+        auto promise = vega::Scheduler::getCurrent().setTimeout([i, &results, &seq] () {
 
             results[i] = ++seq;
         
@@ -42,6 +42,6 @@ vega::Promise<void> suspendMain() {
 
 
 int main() {
-    vega::Scheduler::get().runBlocking(suspendMain);
+    vega::Scheduler::getDefault().runBlocking(suspendMain);
     return 0;
 }

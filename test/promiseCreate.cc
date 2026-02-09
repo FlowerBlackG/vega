@@ -13,7 +13,7 @@ Promise<> suspendMain() {
     bool mark = false;
     try {
         co_await Promise<>::create([](auto resolve, auto reject) -> Promise<> {
-            co_await Scheduler::get().delay(std::chrono::milliseconds(20));
+            co_await Scheduler::getCurrent().delay(std::chrono::milliseconds(20));
             reject(std::runtime_error("suspendMain"));
             resolve();
         });  // this should throw.
@@ -28,7 +28,7 @@ Promise<> suspendMain() {
     
     try {
         co_await Promise<>::create([](auto resolve, auto reject) -> Promise<> {
-            co_await Scheduler::get().delay(std::chrono::milliseconds(20));
+            co_await Scheduler::getCurrent().delay(std::chrono::milliseconds(20));
             resolve();
             reject(std::runtime_error("suspendMain"));
         });  // this should not throw.
@@ -39,7 +39,7 @@ Promise<> suspendMain() {
     
     try {
         Promise<>::create([](auto resolve, auto reject) -> Promise<> {
-            co_await Scheduler::get().delay(std::chrono::milliseconds(20));
+            co_await Scheduler::getCurrent().delay(std::chrono::milliseconds(20));
             reject(std::runtime_error("suspendMain"));
             resolve();
         });  // this promise throws, but ignored.
@@ -52,6 +52,6 @@ Promise<> suspendMain() {
 
 
 int main() {
-    Scheduler::get().runBlocking(suspendMain);
+    Scheduler::getDefault().runBlocking(suspendMain);
     return 0;
 }

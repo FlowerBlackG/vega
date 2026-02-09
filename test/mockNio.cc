@@ -40,7 +40,7 @@ Promise<> suspendMain() {
         callbacks.resumeWithException = nullptr;
     });
     
-    co_await Scheduler::get().delay(NIO_JOB_DURATION);
+    co_await Scheduler::getCurrent().delay(NIO_JOB_DURATION);
 
     auto result = co_await successPromise;
 
@@ -99,7 +99,7 @@ int main() {
     auto nioThread = std::thread(nioThreadMain);
     nioThreadId = nioThread.get_id();
 
-    Scheduler::get().runBlocking(suspendMain);
+    Scheduler::getDefault().runBlocking(suspendMain);
     
     assertNotInNioThread();
     assert(suspendMainFinished);

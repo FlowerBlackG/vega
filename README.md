@@ -59,7 +59,7 @@ Promise<> suspendMain() {
 }
 
 int main() {
-    Scheduler::get().runBlocking(suspendMain);
+    Scheduler::getDefault().runBlocking(suspendMain);
     return 0;
 }
 ```
@@ -86,8 +86,8 @@ Promise<> suspendMain() {
     
     printTime("entry");
 
-    auto timeout = Scheduler::get().setTimeout([] () {
-    
+    auto timeout = Scheduler::getCurrent().setTimeout([] () {
+  
         printTime("setTimeout callback");
 
     }, std::chrono::seconds(1));
@@ -98,13 +98,13 @@ Promise<> suspendMain() {
 
     printTime("after await timeout");
 
-    co_await Scheduler::get().delay(std::chrono::seconds(1));
+    co_await Scheduler::getCurrent().delay(std::chrono::seconds(1));
 
     printTime("after delay");
 }
 
 int main() {
-    Scheduler::get().runBlocking(suspendMain);
+    Scheduler::getDefault().runBlocking(suspendMain);
     return 0;
 }
 

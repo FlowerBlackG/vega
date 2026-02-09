@@ -14,7 +14,7 @@ using namespace vega;
 Promise<> fluentMain() {
     co_await Promise<>::resolve();
     auto p = Promise<>();
-    co_await Scheduler::get().delay(std::chrono::milliseconds(200));
+    co_await Scheduler::getCurrent().delay(std::chrono::milliseconds(200));
 }
 
 
@@ -36,7 +36,7 @@ int main() {
     
     auto fluentThread = std::thread([&fluentStatus] () {
         fluentStatus = TaskStatus::Submitted;
-        Scheduler::get().runBlocking(fluentMain);
+        Scheduler::getDefault().runBlocking(fluentMain);
         fluentStatus = TaskStatus::Finished;
     });
 

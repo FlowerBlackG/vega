@@ -7,22 +7,22 @@
 
 
 int main() {
-    vega::Scheduler::get().runBlocking([] () -> vega::Promise<void> {
+    vega::Scheduler::getDefault().runBlocking([] () -> vega::Promise<void> {
 
         auto t0 = std::chrono::steady_clock::now();
 
         // delay but fire and forget
-        vega::Scheduler::get().delay(std::chrono::milliseconds(1000));
+        vega::Scheduler::getCurrent().delay(std::chrono::milliseconds(1000));
 
         auto t1 = std::chrono::steady_clock::now();
 
         // delay and wait
-        co_await vega::Scheduler::get().delay(std::chrono::milliseconds(2000));
+        co_await vega::Scheduler::getCurrent().delay(std::chrono::milliseconds(2000));
 
         auto t2 = std::chrono::steady_clock::now();
 
         // delay but fire and forget
-        vega::Scheduler::get().delay(std::chrono::milliseconds(1000));
+        vega::Scheduler::getCurrent().delay(std::chrono::milliseconds(1000));
 
         auto t3 = std::chrono::steady_clock::now();
 

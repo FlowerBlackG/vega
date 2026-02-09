@@ -227,7 +227,7 @@ Promise<> runAllTests() {
 
 
 int main() {
-    Scheduler::get().runBlocking(runAllTests);
+    Scheduler::getDefault().runBlocking(runAllTests);
     return 0;
 }
 
